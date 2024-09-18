@@ -5,25 +5,25 @@ namespace AsyncPipeline;
 /// </summary>
 public class AsyncPipeline<TInput, TOutput>
 {
-    private readonly Func<IAsyncEnumerable<TInput>, IAsyncEnumerable<TOutput>> _pipelineFunc;
+    private readonly Func<IAsyncEnumerable<TInput>, CancellationToken, IAsyncEnumerable<TOutput>> _pipelineFunc;
 
-    private AsyncPipeline(Func<IAsyncEnumerable<TInput>, IAsyncEnumerable<TOutput>> pipelineFunc)
+    private AsyncPipeline(Func<IAsyncEnumerable<TInput>, CancellationToken, IAsyncEnumerable<TOutput>> pipelineFunc)
     {
         _pipelineFunc = pipelineFunc;
     }
 
     public static AsyncPipeline<TInput, TInput> Create()
     {
-        return new AsyncPipeline<TInput, TInput>(input => input);
+        return new AsyncPipeline<TInput, TInput>((input, _) => input);
     }
 
     public AsyncPipeline<TInput, TNewOutput> AddStep<TNewOutput>(IAsyncPipelineStep<TOutput, TNewOutput> step)
     {
-        return new AsyncPipeline<TInput, TNewOutput>(input => step.ProcessAsync(_pipelineFunc(input)));
+        return new AsyncPipeline<TInput, TNewOutput>((input, cancellationToken) => step.ProcessAsync(_pipelineFunc(input, cancellationToken), cancellationToken));
     }
 
-    public IAsyncEnumerable<TOutput> ExecuteAsync(IAsyncEnumerable<TInput> input)
+    public IAsyncEnumerable<TOutput> ExecuteAsync(IAsyncEnumerable<TInput> input, CancellationToken cancellationToken = default)
     {
-        return _pipelineFunc(input);
+        return _pipelineFunc(input, cancellationToken);
     }
 }

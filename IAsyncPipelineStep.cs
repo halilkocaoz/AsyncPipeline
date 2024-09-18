@@ -5,5 +5,5 @@ namespace AsyncPipeline;
 /// </summary>
 public interface IAsyncPipelineStep<in TInput, out TOutput>
 {
-    IAsyncEnumerable<TOutput> ProcessAsync(IAsyncEnumerable<TInput> input);
+    IAsyncEnumerable<TOutput> ProcessAsync(IAsyncEnumerable<TInput> input, CancellationToken cancellationToken = default);
 }

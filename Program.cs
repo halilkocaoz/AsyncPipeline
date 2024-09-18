@@ -1,24 +1,27 @@
 ﻿using AsyncPipeline;
 
-var numberProcessingPipeline = AsyncPipeline<int, int>.Create()
+var cancellationTokenSource = new CancellationTokenSource();
+cancellationTokenSource.CancelAfter(250);
+
+var numberProcessingPipeline = AsyncPipeline<int, string>.Create()
     .AddStep(new MultiplyStep(2))
     .AddStep(new AddStep(10))
     .AddStep(new MultiplyStep(2))
     .AddStep(new AddStep(5));
 var numbersProcessingTask = Task.Run(async () =>
 {
-    await foreach (var result in numberProcessingPipeline.ExecuteAsync(GetNumbersAsync()))
+    await foreach (var result in numberProcessingPipeline.ExecuteAsync(GetNumbersAsync(), cancellationTokenSource.Token))
         Console.WriteLine(result);
-});
+}, cancellationTokenSource.Token);
 
 var textProcessingPipeline = AsyncPipeline<string, string>.Create()
     .AddStep(new ToUpperStep())
     .AddStep(new ReverseStep());
 var textsProcessingTask = Task.Run(async () =>
 {
-    await foreach (var result in textProcessingPipeline.ExecuteAsync(GetTextsAsync()))
+    await foreach (var result in textProcessingPipeline.ExecuteAsync(GetTextsAsync(), cancellationTokenSource.Token))
         Console.WriteLine(result);
-});
+}, cancellationTokenSource.Token);
 
 await Task.WhenAll(numbersProcessingTask, textsProcessingTask);
 
